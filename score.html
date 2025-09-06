@@ -1,0 +1,138 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QuizVerse - Your Score</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to right, #f5f5dc, #fffdd0);
+      color: #4a3f35;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .score-container {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(8px);
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 400px;
+    }
+
+    .score-container h1 {
+      font-size: 2.2rem;
+      color: #5e4033;
+      margin-bottom: 20px;
+    }
+
+    .score-box {
+      background: #f0e9dd;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 25px;
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+    }
+
+    #feedback-message {
+      font-size: 1.1rem;
+      margin: 20px 0;
+      font-weight: 500;
+      color: #6a4f3a;
+    }
+
+    #final-score {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #4a3f35;
+    }
+
+    .score-buttons button {
+      padding: 12px 24px;
+      margin: 10px;
+      border: none;
+      border-radius: 30px;
+      background: #a1887f;
+      color: #fff;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(161, 136, 127, 0.4);
+    }
+
+    .score-buttons button:hover {
+      background: #8d6e63;
+      transform: translateY(-2px);
+    }
+  </style>
+  </head>
+  <body>
+    <div class="score-container">
+      <h1>Quiz Completed!</h1>
+      <div class="score-box">
+        <p>Your Score:</p>
+        <h2 id="final-score">0 / 0</h2>
+      </div>
+      <p id="feedback-message"></p>
+      <div class="score-buttons">
+        <!-- Updated buttons, no need for event listeners since they use onclick -->
+        <button onclick="window.location.href='index.html'">🏠 Go to Home</button>
+        <button onclick="window.location.href='leaderboard.html'">🏆 View Leaderboard</button>
+      </div>
+    </div>
+
+    <script>
+      // Fetch the score and total questions from localStorage
+      const score = parseInt(localStorage.getItem("quizScore")) || 0;
+      const total = parseInt(localStorage.getItem("quizTotal")) || 5;
+    
+      // Display final score
+      document.getElementById("final-score").innerText = `${score} / ${total}`;
+    
+      // Calculate percentage and provide feedback
+      const percentage = (score / total) * 100;
+      let feedback = "";
+      if (percentage >= 80) feedback = "🎉 Excellent! You really know your stuff!";
+      else if (percentage >= 50) feedback = "👍 Good job! Keep practicing!";
+      else feedback = "💪 Better luck next time! Don’t give up!";
+      document.getElementById("feedback-message").innerText = feedback;
+    
+      // Handle the "Save Score" button click
+      document.querySelector(".score-buttons button:nth-child(2)").addEventListener("click", () => {
+        const playerName = prompt("Enter your name:");
+        if (!playerName) return;
+    
+        // Submit score to the server
+        fetch('save_score.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `player_name=${encodeURIComponent(playerName)}&score=${score}&total=${total}`
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Response from server:', data); // Log the response
+          alert(data.message); // Show message from the server
+          if (data.message.includes("success")) {
+            window.location.href = 'leaderboard.html'; // Redirect only if the score was saved successfully
+          }
+        })
+        .catch(error => {
+          console.error("Error submitting score:", error);
+          alert("Something went wrong while saving your score.");
+        });
+      });
+    </script>
+    
+    
+    
+</body>
+</html>

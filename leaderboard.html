@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QuizVerse - Leaderboard</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+      color: #4a3f35;
+      background: linear-gradient(to right, #f5f5dc, #fffaf0); /* warm beige gradient */
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .leaderboard-container {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 30px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 2.2rem;
+      color: #5e4033;
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    table th, table td {
+      padding: 12px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+
+    table th {
+      background-color: #a1887f;
+      color: white;
+    }
+
+    table tr:hover {
+      background-color: #f0e9dd;
+    }
+
+    .back-btn {
+      display: block;
+      margin-top: 20px;
+      padding: 12px 24px;
+      text-align: center;
+      background-color: #a1887f;
+      color: white;
+      border-radius: 30px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+
+    .back-btn:hover {
+      background-color: #8d6e63;
+    }
+  </style>
+</head>
+<body>
+  <div class="leaderboard-container">
+    <div class="header">
+      <h1>Leaderboard</h1>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Player</th>
+          <th>Score</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboard-list">
+        <!-- Leaderboard Entries will be inserted here -->
+      </tbody>
+    </table>
+
+    <a href="index.html" class="back-btn">Back to Home</a>
+  </div>
+
+ 
+  <script>
+    function loadLeaderboard() {
+  fetch('fetch_scores.php')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      const leaderboardTable = document.getElementById("leaderboard-list");
+      leaderboardTable.innerHTML = "";
+
+      if (!Array.isArray(data)) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.colSpan = 4;
+        cell.textContent = "No leaderboard data available.";
+        row.appendChild(cell);
+        leaderboardTable.appendChild(row);
+        return;
+      }
+
+      data.forEach((entry, index) => {
+        const row = document.createElement("tr");
+
+        const rankCell = document.createElement("td");
+        const nameCell = document.createElement("td");
+        const scoreCell = document.createElement("td");
+        
+        rankCell.textContent = index + 1;
+        nameCell.textContent = entry.player_name;
+        scoreCell.textContent = entry.score;
+
+        row.appendChild(rankCell);
+        row.appendChild(nameCell);
+        row.appendChild(scoreCell);
+
+        leaderboardTable.appendChild(row);
+      });
+    })
+    .catch(error => {
+      console.error("Error fetching leaderboard:", error);
+    });
+}
+
+// Run when page loads
+window.addEventListener("DOMContentLoaded", loadLeaderboard);
+  </script>
+  
+  
+  
+  
+
+</body>
+</html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QuizVerse - Quiz</title>
+  <style>
+    /* Base Styles */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+      background: #f8f5f0;
+      background-image: url('https://www.transparenttextures.com/patterns/cubes.png'); 
+      /* optional subtle pattern */
+      background-size: cover;
+      color: #222;
+      /* color: #2d2d2d; */
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Quiz Container */
+    .quiz-container {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      max-width: 600px;
+      width: 90%;
+    }
+
+    /* Header */
+    .header h1 {
+      font-size: 2.5rem;
+      color: #3a2c1e;
+      margin-bottom: 10px;
+    }
+
+    #quiz-meta {
+      font-size: 1rem;
+      color: #444;
+      margin-bottom: 20px;
+    }
+
+    /* Progress Bar */
+    .progress {
+      width: 100%;
+      background: #ddd;
+      height: 10px;
+      border-radius: 5px;
+      margin-bottom: 30px;
+      overflow: hidden;
+    }
+
+    #progress-bar {
+      width: 100%;
+      background-color: #8b5e3c;
+      height: 100%;
+      border-radius: 5px;
+      transition: width 0.3s ease-in-out;
+    }
+
+    /* Question Section */
+    .question {
+      margin-bottom: 30px;
+      text-align: left;
+    }
+
+    .question p {
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+
+    .question label {
+      display: block;
+      margin: 8px 0;
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 10px 15px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      transition: background 0.3s ease;
+    }
+
+    .question label:hover {
+      background: #f0f0f0;
+    }
+
+    .question input[type="radio"] {
+      margin-right: 10px;
+    }
+
+    /* Next Button */
+    #next-btn {
+      padding: 12px 30px;
+      font-size: 1.1rem;
+      background-color: #8b5e3c;
+      border: none;
+      border-radius: 30px;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 15px rgba(193, 153, 98, 0.6);
+    }
+
+    #next-btn:hover {
+      transform: scale(1.05);
+      background-color: #704a2f;
+      box-shadow: 0 6px 20px rgba(193, 153, 98, 0.6);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2rem;
+      }
+
+      .question p {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <div class="header">
+      <h1>QuizVerse</h1>
+      <p id="quiz-meta">Category: <span id="category-label"></span> | Difficulty: <span id="difficulty-label"></span></p>
+    </div>
+
+    <div class="progress">
+      <div id="progress-bar"></div>
+    </div>
+
+    <div id="questions-container"></div>
+
+    <button id="next-btn" onclick="handleNext()">Next</button>
+  </div>
+
+  <script>
+    // Initialize quiz when page is loaded
+    document.addEventListener("DOMContentLoaded", () => {
+      fetchQuestions();
+      document.getElementById("progress-bar").style.width = "0%"; // Initialize progress bar at 0%
+    });
+  
+    // Get category and difficulty from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const category = urlParams.get('category') || 'general';
+    const difficulty = urlParams.get('difficulty') || 'easy';
+  
+    document.getElementById('category-label').textContent = category;
+    document.getElementById('difficulty-label').textContent = difficulty;
+  
+    let questionsData = [];
+    let currentQuestionIndex = 0;
+    let userAnswers = [];
+  
+    // Fetch questions from the server
+    async function fetchQuestions() {
+      try {
+        const response = await fetch(`http://localhost/QuizVerse/fetch_questions.php?category=${category}&difficulty=${difficulty}`);
+        const questions = await response.json();
+  
+        if (!questions.length) {
+          document.getElementById('questions-container').innerHTML = "<p>No questions available for this category and difficulty.</p>";
+          document.getElementById('next-btn').style.display = 'none';
+          return;
+        }
+  
+        questionsData = questions;
+        displayQuestion(currentQuestionIndex);
+      } catch (error) {
+        console.error('Fetch error:', error);
+        alert('Failed to load questions.');
+      }
+    }
+  
+    // Display the current question
+    function displayQuestion(index) {
+      const container = document.getElementById('questions-container');
+      const q = questionsData[index];
+  
+      container.innerHTML = `
+        <div class="question">
+          <p><strong>${index + 1}. ${q.question_text}</strong></p>
+          <label><input type="radio" name="answer" value="0"> ${q.option1}</label><br>
+          <label><input type="radio" name="answer" value="1"> ${q.option2}</label><br>
+          <label><input type="radio" name="answer" value="2"> ${q.option3}</label><br>
+          <label><input type="radio" name="answer" value="3"> ${q.option4}</label>
+        </div>
+      `;
+  
+      // Do NOT update progress bar here — it updates only after "Next"
+  
+      const btn = document.getElementById('next-btn');
+      btn.textContent = (index === questionsData.length - 1) ? 'Submit Quiz' : 'Next';
+    }
+  
+    // Update the progress bar after user clicks "Next"
+    function updateProgressBar(index) {
+      const progress = ((index + 1) / questionsData.length) * 100;
+      document.getElementById("progress-bar").style.width = `${progress}%`;
+    }
+  
+    // Handle the "Next" button click
+    function handleNext() {
+      const selected = document.querySelector('input[name="answer"]:checked');
+  
+      if (!selected) {
+        alert("Please select an answer before continuing.");
+        return;
+      }
+  
+      userAnswers[currentQuestionIndex] = parseInt(selected.value);
+  
+      // Update progress only after an answer is submitted
+      updateProgressBar(currentQuestionIndex);
+  
+      if (currentQuestionIndex < questionsData.length - 1) {
+        currentQuestionIndex++;
+        displayQuestion(currentQuestionIndex);
+      } else {
+        submitQuiz();
+      }
+    }
+  
+    // Calculate and submit the quiz score
+    function submitQuiz() {
+      let score = 0;
+      questionsData.forEach((q, i) => {
+        if (userAnswers[i] === q.correct_option) score++; // Correct answer
+      });
+  
+      localStorage.setItem('quizScore', score);
+      localStorage.setItem('quizTotal', questionsData.length);
+      localStorage.setItem('quizDifficulty', difficulty);
+      localStorage.setItem('quizCategory', category);
+  
+      // Ask for player's name if not already set in localStorage
+      let playerName = localStorage.getItem("playerName");
+      if (!playerName) {
+        playerName = prompt("Enter your name:");
+        localStorage.setItem("playerName", playerName);
+      }
+  
+      // Save score to the database and add player to 'user' table if not already present
+      fetch('save_score.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `player_name=${encodeURIComponent(playerName)}&score=${score}&total=${questionsData.length}`
+      })
+      .then(response => response.json())
+      .then(data => {
+        alert("Score saved successfully!");
+      })
+      .catch(error => {
+        console.error('Error saving score:', error);
+      });
+
+  
+      window.location.href = 'score.html';
+    }
+</script>
+
+  
+
+</body>
+</html>
